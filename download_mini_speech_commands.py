@@ -23,8 +23,11 @@ def downloadMiniSpeech():
     if not os.path.exists(DEST_DIR):
         print("Extracting dataset...")
         with zipfile.ZipFile(ZIP_PATH, 'r') as zip_ref:
-            zip_ref.extractall(DEST_DIR)
+            zip_ref.extractall(DATA_DIR)
         print("Extraction complete.")
+
+        print("Deleting zip file...")
+        os.remove(ZIP_PATH)
     else:
         print("Dataset already extracted.")
 
