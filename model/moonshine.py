@@ -5,11 +5,14 @@ from . import AudioPreprocessor
 from . import EncoderBlock
 
 class MoonShine(nn.Module):
-    def __init__(self, dim=288, innerDim=288, nHead=8, nEncoder=6, nDecoder=6):
+    def __init__(self, dim=288, innerDim=288, nHead=8, nEncoder=6, nDecoder=6, encMlpMult=4):
         super(MoonShine, self).__init__()
         self.preprocessor = AudioPreprocessor(dim=dim)
         maxSeqLen = 40
-        self.encoders = nn.Sequential(*[EncoderBlock(dim=dim, innerDim=innerDim, nHead=nHead, maxSeqLen=maxSeqLen) for _ in range(nEncoder)])
+        self.encoders = nn.Sequential(
+            *[EncoderBlock(dim=dim, innerDim=innerDim, nHead=nHead, maxSeqLen=maxSeqLen, dimMult=encMlpMult) 
+                for _ in range(nEncoder)]
+            )
         
 
     def forward(self, x):
