@@ -11,3 +11,6 @@ export KERAS_BACKEND=torch
 uv sync
 source .venv/bin/activate
 ```
+
+## Swift (MLX) Implementation notes
+- Llama tokenizers are available in https://github.com/huggingface/swift-transformers 

@@ -14,5 +14,7 @@ class AudioPreprocessor(nn.Module):
         x = F.tanh(x)
         x = self.conv2(x)
         x = F.gelu(x)
+        x = self.conv3(x)
+        x = F.gelu(x)
 
         return x
