@@ -54,7 +54,7 @@ class MultiHeadSelfAttentionRoPE(nn.Module):
     def applyRoPE(self, q, k, cos, sin):
         def rotate(x):
             # x: (B, nH, T, hC)
-            # cos, sin: (1, 1, T, hC)
+            # cos, sin: (1, 1, T, hC/2)
             seqLen = x.shape[2]
             cos_ = cos[..., :seqLen, :]
             sin_ = sin[..., :seqLen, :]
