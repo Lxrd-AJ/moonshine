@@ -64,29 +64,3 @@ class MultiHeadSelfAttentionRoPE(nn.Module):
             return xR
 
         return rotate(q), rotate(k)
-
-
-class EncoderBlock(nn.Module):
-    def __init__(self, dim=288, innerDim=288, nHead=8, maxSeqLen=40, dimMult=4):
-        super(EncoderBlock, self).__init__()
-        # inputs from audio preprocessor are of shape (B, C, T) but need to be reshaped to (B, T, C)
-        self.norm1 = nn.LayerNorm(dim)
-        self.norm2 = nn.LayerNorm(dim)
-        self.sAttn = MultiHeadSelfAttentionRoPE(dim, innerDim, nHead, bias=False, maxSeqLen=maxSeqLen)
-        self.mlp = nn.Sequential(
-            nn.Linear(dim, dim*dimMult),
-            nn.GELU(),
-            nn.Linear(dim*dimMult, dim)
-        )
-
-    def forward(self, x):
-        # x: (B, T, C)
-        xSkip = x
-        x = self.norm1(x)
-        x = self.sAttn(x) # (B, T, C)
-        x = x + xSkip
-        xSkip = x
-        x = self.norm2(x)
-        x = self.mlp(x)
-
-        return x + xSkip

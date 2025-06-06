@@ -1,5 +1,6 @@
 from .preprocessor import AudioPreprocessor
-from .transformer import MultiHeadSelfAttentionRoPE, EncoderBlock
+from .encoders import AudioEncoders, EncoderBlock
+from .transformer import MultiHeadSelfAttentionRoPE
 from .moonshine import MoonShine
 import torch
 
@@ -16,3 +17,11 @@ def diskSizeOf(model):
         return f"{tensorSizeBytes / 1024**2:.2f} MB", numParams
     else:
         return f"{tensorSizeBytes / 1024**3:.2f} GB", numParams
+
+def downloadPretrainedWeights(variant = "tiny"):
+    from huggingface_hub import hf_hub_download
+    repo = "UsefulSensors/moonshine"
+    return (
+        hf_hub_download(repo, f"{x}.weights.h5", subfolder=variant)
+        for x in ("preprocessor", "encoder", "decoder")
+    )
