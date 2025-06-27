@@ -12,7 +12,7 @@ def generateRoPE(seqLen, dim, base=10000) -> tuple["torch.Tensor", "torch.Tensor
     return torch.cos(theta).unsqueeze(0).unsqueeze(0), torch.sin(theta).unsqueeze(0).unsqueeze(0) # both are (1, 1, T, C/2)
 
 class MultiHeadSelfAttentionRoPE(nn.Module):
-    def __init__(self, dim=288, innerDim=288, nHead=8, bias=False, maxSeqLen=128):
+    def __init__(self, dim=288, innerDim=288, nHead=8, bias=False, maxSeqLen=128, isCausal=False):
         super(MultiHeadSelfAttentionRoPE, self).__init__()
         """
         Reimplement multi head attention with RoPe, adapted from 
@@ -30,6 +30,7 @@ class MultiHeadSelfAttentionRoPE(nn.Module):
         self.kProj = nn.Linear(dim, innerDim, bias=bias)
         self.vProj = nn.Linear(dim, innerDim, bias=bias)
         self.outProj = nn.Linear(innerDim, dim, bias=bias)
+        self.isCausal = isCausal
 
         cosEmb, sinEmb = generateRoPE(maxSeqLen, self.headDim)
         self.register_buffer("cosinePositionEmbeddings", cosEmb, persistent=False)
@@ -46,7 +47,7 @@ class MultiHeadSelfAttentionRoPE(nn.Module):
         xV = self.vProj(x).view(B, T, self.nHead, self.headDim).transpose(1, 2) # (B, T, nH, hC) -> (B, nH, T, hC)
         
         rQ, rK = self.applyRoPE(xQ, xK, self.cosinePositionEmbeddings, self.sinePositionEmbeddings)
-        attn = F.scaled_dot_product_attention(rQ, rK, xV)
+        attn = F.scaled_dot_product_attention(rQ, rK, xV, is_causal=self.isCausal)
         attn = attn.transpose(1, 2).reshape(B, T, -1) # (B, nH, T, hC) -> (B, T, nH, hC) -> (B, T, C)
         out = self.outProj(attn)
         return out
@@ -64,3 +65,36 @@ class MultiHeadSelfAttentionRoPE(nn.Module):
             return xR
 
         return rotate(q), rotate(k)
+
+
+class MultiHeadCrossAttention(nn.Module):
+    def __init__(self, dim=288, innerDim=288, nHead=8, bias=False):
+        super(MultiHeadCrossAttention, self).__init__()
+
+        self.headDim = innerDim // nHead
+        self.nHead = nHead
+        
+        self.qProj = nn.Linear(dim, innerDim, bias=bias)
+        self.kProj = nn.Linear(dim, innerDim, bias=bias)
+        self.vProj = nn.Linear(dim, innerDim, bias=bias)
+        self.outProj = nn.Linear(innerDim, dim, bias=bias)
+
+    def forward(self, query, key, value):
+        # query: (B, Tq, C)
+        # key: (B, Tk, C)
+        # value: (B, Tv, C)
+        B, Tq, _ = query.shape
+        _, Tk, _ = key.shape
+        _, Tv, _ = value.shape
+        
+        if Tq != Tk or Tq != Tv:
+            assert Tq == Tk == Tv, "Query, Key, and Value must have the same sequence length."
+        T = Tq
+        xQ = self.qProj(query).view(B, T, self.nHead, self.headDim).transpose(1, 2) # (B, T, nH, hC) -> (B, nH, T, hC)
+        xK = self.kProj(key).view(B, T, self.nHead, self.headDim).transpose(1, 2) # (B, T, nH, hC) -> (B, nH, T, hC)
+        xV = self.vProj(value).view(B, T, self.nHead, self.headDim).transpose(1, 2) # (B, T, nH, hC) -> (B, nH, T, hC)
+        
+        attn = F.scaled_dot_product_attention(xQ, xK, xV) # (B, nH, T, hC) -> (B, nH, T, hC)
+        attn = attn.transpose(1, 2).reshape(B, T, -1) # (B, nH, T, hC) -> (B, T, nH, hC) -> (B, T, C)
+        out = self.outProj(attn)
+        return out

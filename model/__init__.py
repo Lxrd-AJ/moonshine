@@ -1,6 +1,7 @@
 from .preprocessor import AudioPreprocessor
 from .encoders import AudioEncoders, EncoderBlock
-from .transformer import MultiHeadSelfAttentionRoPE, generateRoPE
+from .decoders import AudioDecoders, DecoderBlock
+from .transformer import MultiHeadSelfAttentionRoPE, generateRoPE, MultiHeadCrossAttention
 from .moonshine import MoonShine
 import torch
 
