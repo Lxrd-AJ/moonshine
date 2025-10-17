@@ -86,14 +86,14 @@ class MultiHeadCrossAttention(nn.Module):
         _, Tk, _ = key.shape
         _, Tv, _ = value.shape
         
-        if Tq != Tk or Tq != Tv:
-            assert Tq == Tk == Tv, "Query, Key, and Value must have the same sequence length."
-        T = Tq
-        xQ = self.qProj(query).view(B, T, self.nHead, self.headDim).transpose(1, 2) # (B, T, nH, hC) -> (B, nH, T, hC)
-        xK = self.kProj(key).view(B, T, self.nHead, self.headDim).transpose(1, 2) # (B, T, nH, hC) -> (B, nH, T, hC)
-        xV = self.vProj(value).view(B, T, self.nHead, self.headDim).transpose(1, 2) # (B, T, nH, hC) -> (B, nH, T, hC)
+        assert Tk == Tv, "Key and value must have the same sequence length"
+        Tkv = Tk
+
+        xQ = self.qProj(query).view(B, Tq, self.nHead, self.headDim).transpose(1, 2) # (B, T, nH, hC) -> (B, nH, T, hC)
+        xK = self.kProj(key).view(B, Tkv, self.nHead, self.headDim).transpose(1, 2) # (B, T, nH, hC) -> (B, nH, T, hC)
+        xV = self.vProj(value).view(B, Tkv, self.nHead, self.headDim).transpose(1, 2) # (B, T, nH, hC) -> (B, nH, T, hC)
         
         attn = F.scaled_dot_product_attention(xQ, xK, xV) # (B, nH, T, hC) -> (B, nH, T, hC)
-        attn = attn.transpose(1, 2).reshape(B, T, -1) # (B, nH, T, hC) -> (B, T, nH, hC) -> (B, T, C)
+        attn = attn.transpose(1, 2).reshape(B, Tq, -1) # (B, nH, Tq, hC) -> (B, Tq, nH, hC) -> (B, Tq, C)
         out = self.outProj(attn)
         return out

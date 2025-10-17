@@ -21,9 +21,9 @@ class MoonShine(nn.Module):
         maxTokensPerSecond = numAudioSeconds * 6
         
         tokens = torch.LongTensor([[DECODER_START_TOKEN]])
-        print(tokens.shape)
-        print(f"Encoder out (audio features) with shape {audioFeatures.shape}")
         logits = self.decoders(tokens, audioFeatures)
+
+        # TODO: Continue here loop until `maxTokensPerSecond`
         
         return logits
 
@@ -33,3 +33,5 @@ class MoonShine(nn.Module):
 
         with h5py.File(encoderWeights, 'r') as f:
             self.encoders.loadWeights(f)
+
+        # TODO: Load decoder weights
