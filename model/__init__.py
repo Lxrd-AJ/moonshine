@@ -1,3 +1,10 @@
+SAMPLE_RATE = 16_000
+VOCAB_SIZE = 32768
+
+DECODER_START_TOKEN = 1
+END_SPEECH_TOKEN = 2
+
+
 from .preprocessor import AudioPreprocessor
 from .encoders import AudioEncoders, EncoderBlock
 from .decoders import AudioDecoders, DecoderBlock

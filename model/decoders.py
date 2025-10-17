@@ -21,6 +21,7 @@ class AudioDecoders(nn.Module):
         # tokens: (B, T) where B is batch size and T is sequence length
         # encoderHiddenState: (B, T, C) where C is the dimension of the hidden state
         x = self.tokenEmbedding(tokens)  # (B, T, C)
+        print(f"Embedded token size {x.shape}")
         for decoder in self.layers:
             x = decoder(x, encoderHiddenState)  # (B, T, C)
         x = self.finalNorm(x)
@@ -44,6 +45,8 @@ class DecoderBlock(nn.Module):
         )
 
     def forward(self, x, encoderHiddenState):
+        print("--- Decoder block")
+        print(x.shape)
         xSkip = x
         
         x = self.norm1(x)
@@ -52,6 +55,8 @@ class DecoderBlock(nn.Module):
         
         xSkip = x
         x = self.norm2(x)
+        # TODO: Fix issue here, the tokens in and the encoder hidden state do not have the same number of time steps
+        # `x` [1, 1, 288] and `encoderHiddenState` [1, 40, 288] on first forward
         x = self.crossAttn(x, encoderHiddenState, encoderHiddenState)
         x = x + xSkip
         

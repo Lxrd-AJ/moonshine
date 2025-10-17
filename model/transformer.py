@@ -20,8 +20,7 @@ class MultiHeadSelfAttentionRoPE(nn.Module):
         * https://github.com/huggingface/transformers/blob/42ef218b58de79415ab45377a1e8de8dca3929f0/src/transformers/models/llama/modeling_llama.py#L197 
         * https://github.com/Lxrd-AJ/positional-encoding/blob/main/PositionalEncoding.ipynb
 
-        Uses `cos` and `sin` to perform the rotations, not as elegant as llama's complex implementation but mathematically the 
-        same
+        Uses `cos` and `sin` to perform the rotations, not as elegant as llama's complex implementation but mathematically the same
         """
         self.headDim = innerDim // nHead
         self.nHead = nHead
